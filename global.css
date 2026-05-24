@@ -1,0 +1,231 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+/* ─────────────────────────────────────────────
+   DESIGN TOKENS — Lingua Design System
+   ───────────────────────────────────────────── */
+@theme {
+  /* Primary palette */
+  --color-lingua-purple: #6c4ef5;
+  --color-lingua-deep-purple: #5b38f6;
+  --color-lingua-blue: #4d88ff;
+  --color-lingua-green: #21c16b;
+
+  /* Semantic palette */
+  --color-success: #21c16b;
+  --color-warning: #ffcb00;
+  --color-streak: #ff8a00;
+  --color-error: #ff4d4f;
+  --color-info: #4d88ff;
+
+  /* Neutrals */
+  --color-text-primary: #001132;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-surface: #f6f7fb;
+  --color-background: #ffffff;
+
+  /* Font families — names must match useFonts keys */
+  --font-poppins-regular: "Poppins-Regular";
+  --font-poppins-medium: "Poppins-Medium";
+  --font-poppins-semibold: "Poppins-SemiBold";
+  --font-poppins-bold: "Poppins-Bold";
+
+  /* Type scale (rem-based; NativeWind converts to dp on native) */
+  --text-h1: 2rem; /* 32px */
+  --text-h2: 1.5rem; /* 24px */
+  --text-h3: 1.25rem; /* 20px */
+  --text-h4: 1rem; /* 16px */
+  --text-body-lg: 1rem; /* 16px */
+  --text-body-md: 0.875rem; /* 14px */
+  --text-body-sm: 0.8125rem; /* 13px */
+  --text-caption: 0.6875rem; /* 11px */
+}
+
+/* ─────────────────────────────────────────────
+   GLOBAL BASE
+   ───────────────────────────────────────────── */
+@layer base {
+  * {
+    font-family: "Poppins-Regular", sans-serif;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   UTILITY CLASSES
+   ───────────────────────────────────────────── */
+@layer utilities {
+  /* ── Typography ─────────────────────────────
+     Usage: <Text className="h1">Title</Text>
+  ────────────────────────────────────────── */
+  .h1 {
+    font-size: 32px;
+    font-family: "Poppins-Bold";
+    line-height: 38px;
+  }
+
+  .h2 {
+    font-size: 24px;
+    font-family: "Poppins-SemiBold";
+    line-height: 31px;
+  }
+
+  .h3 {
+    font-size: 20px;
+    font-family: "Poppins-SemiBold";
+    line-height: 26px;
+  }
+
+  .h4 {
+    font-size: 16px;
+    font-family: "Poppins-Medium";
+    line-height: 22px;
+  }
+
+  .body-lg {
+    font-size: 16px;
+    font-family: "Poppins-Regular";
+    line-height: 26px;
+  }
+
+  .body-md {
+    font-size: 14px;
+    font-family: "Poppins-Regular";
+    line-height: 22px;
+  }
+
+  .body-sm {
+    font-size: 13px;
+    font-family: "Poppins-Regular";
+    line-height: 21px;
+  }
+
+  .caption {
+    font-size: 11px;
+    font-family: "Poppins-Regular";
+    line-height: 15px;
+  }
+
+  /* ── Buttons ────────────────────────────────
+     Usage: <TouchableOpacity className="btn btn-primary">
+  ────────────────────────────────────────── */
+  .btn {
+    border-radius: 14px;
+    padding: 14px 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    background-color: #6c4ef5;
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    border-width: 2px;
+    border-color: #6c4ef5;
+  }
+
+  .btn-success {
+    background-color: #21c16b;
+  }
+
+  .btn-label {
+    font-size: 16px;
+    font-family: "Poppins-SemiBold";
+    line-height: 22px;
+    color: #ffffff;
+  }
+
+  .btn-label-outline {
+    font-size: 16px;
+    font-family: "Poppins-SemiBold";
+    line-height: 22px;
+    color: #6c4ef5;
+  }
+
+  /* ── Cards ──────────────────────────────────
+     Usage: <View className="card">
+  ────────────────────────────────────────── */
+  .card {
+    background-color: #ffffff;
+    border-radius: 14px;
+    border-width: 1px;
+    border-color: #e5e7eb;
+    padding: 16px;
+  }
+
+  .card-elevated {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .card-surface {
+    background-color: #f6f7fb;
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  /* ── Badges ─────────────────────────────────
+     Usage: <View className="badge badge-success">
+  ────────────────────────────────────────── */
+  .badge {
+    border-radius: 9999px;
+    padding: 4px 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .badge-success {
+    background-color: #21c16b;
+  }
+
+  .badge-warning {
+    background-color: #ffcb00;
+  }
+
+  .badge-streak {
+    background-color: #ff8a00;
+  }
+
+  .badge-error {
+    background-color: #ff4d4f;
+  }
+
+  .badge-info {
+    background-color: #4d88ff;
+  }
+
+  .badge-label {
+    font-size: 11px;
+    font-family: "Poppins-SemiBold";
+    color: #ffffff;
+  }
+
+  /* ── Layout ─────────────────────────────────
+     Usage: <View className="screen">
+  ────────────────────────────────────────── */
+  .screen {
+    flex: 1;
+    background-color: #ffffff;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .screen-surface {
+    flex: 1;
+    background-color: #f6f7fb;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .divider {
+    height: 1px;
+    background-color: #e5e7eb;
+    width: 100%;
+  }
+}
