@@ -1,176 +1,144 @@
-# Pull Request Review System — Lingua Duolingo-Clone
+# Pull Request Review System
 
-This project uses a custom Claude Code skill for structured PR reviews. It is built and maintained in-house — no third-party review bots, no external services. Every review is produced by the skill, posted directly to the GitHub PR as a comment using the `gh` CLI, and is visible to anyone reading the PR on GitHub.
+This project uses a custom Claude Code skill for structured PR reviews. It is built and maintained in-house — no third-party review bots, no external services. Every review is produced by the skill, posted directly to the GitHub PR as inline review comments and a summary block comment, and is visible to anyone reading the PR on GitHub.
+
+**Version:** 2.0.0 — Stack-agnostic. Works on any repo with an `AGENTS.md` and a `gh`-authenticated terminal.
 
 ---
 
 ## How to Run a Review
 
-```bash
+```
 /pr-review
 ```
 
 Run this in Claude Code with the feature branch checked out. The skill:
 
-1. Reads the diff against `main`
-2. Loads `AGENTS.md` and `package.json`
-3. Applies five review lenses to every changed file
-4. Produces a structured report
-5. **Posts the report directly to the open GitHub PR as a comment**
-
-The review appears on GitHub automatically. No manual copy-paste required. Requires `gh auth login` to be completed once.
+1. Runs a **preflight check** — confirms `gh` is authenticated, an open PR exists, and `AGENTS.md` is present
+2. Reads the diff against `main`
+3. Reads `AGENTS.md` and derives review lenses from the project's own rules
+4. Applies universal quality checks (secrets, debug logs, type safety, async error states)
+5. Applies AGENTS.md-derived checks against the diff
+6. Produces a structured report
+7. Posts inline review comments to the PR and a full summary block comment
 
 **Prerequisites:** `gh` CLI installed and authenticated (`gh auth login`).
 
 ---
 
+## Phase 0 — Preflight (Proof of Life)
+
+Before any review work, the skill runs a health check and prints a status table:
+
+```
+## /pr-review Preflight
+
+| Check              | Status | Detail                        |
+|--------------------|--------|-------------------------------|
+| Git repository     | ✅     | /path/to/repo                 |
+| Active branch      | ✅     | feature/my-branch             |
+| gh authenticated   | ✅     | logged in as <username>       |
+| Open PR            | ✅     | PR #3 — Add language selector |
+| AGENTS.md present  | ✅     | found                         |
+
+Skill version 2.0.0 — ready.
+```
+
+If `gh` is not authenticated or no open PR exists, the skill stops immediately and tells you exactly what to run. This phase alone is usable as a standalone health check without running a full review.
+
+---
+
 ## What It Reviews
 
-The reviewer applies five sequential lenses to every changed file. Each lens has a priority level that determines how a finding affects the verdict.
+The reviewer applies two categories of checks to every changed file.
 
-### Priority Scale
+### Category A — Universal (any stack)
+
+These checks never change regardless of project type.
+
+| Priority | Checks |
+|---|---|
+| P0 | Secrets in client code, debug statements, type-safety bypasses (`any`), missing null guards, async with no error state, unauthorized new packages |
+| P1 | Business logic in route/page files, `useEffect` for derived state |
+| P3 | Unclear names, WHAT comments (if banned by AGENTS.md), orphaned TODOs, missing return types |
+| P4 | Touch targets under 44×44pt (mobile), missing loading/empty/error states |
+
+### Category B — AGENTS.md Derived (project-specific)
+
+The skill reads your `AGENTS.md` and constructs checks from it dynamically. No rules are hardcoded. Every finding in this category traces back to a specific rule the project itself defined.
+
+| AGENTS.md rule type | Priority |
+|---|---|
+| Secret handling, security | P0 |
+| Architecture boundaries | P1 |
+| File placement, naming conventions | P1 |
+| Styling system, design token rules | P2 |
+| Asset import conventions | P2 |
+| Data placement conventions | P2 |
+| Comment style | P3 |
+| Visual fidelity, polish | P4 |
+
+---
+
+## Priority Scale
 
 | Level | Label | Meaning |
 |---|---|---|
 | P0 | Critical | Blocks the merge. Must be fixed first. |
-| P1 | High | Should be fixed before merge. Architectural or convention violation. |
-| P2 | Medium | Should be fixed. Inconsistency that compounds at scale. |
-| P3 | Low | Optional. Readability, naming, or structure improvement. |
-| P4 | Polish | Optional. Visual fidelity and UX quality. |
-
----
-
-### P0 — Critical
-
-Findings that block the PR entirely.
-
-- **TypeScript `any`** — the project enforces strict types throughout (`AGENTS.md: "Avoid any"`)
-- **Secrets in the Expo app** — API keys, Stream tokens, or Clerk secrets must live in server-side API routes, never in the mobile bundle
-- **Debugging statements** — `console.log` left in production code paths
-- **Missing null/undefined guards** — unguarded access on data from Zustand stores, Clerk hooks, or API calls
-- **Broken async flows** — navigation or UI that has no loading state and no error state
-- **Unauthorized new packages** — any addition to `package.json` not explicitly approved by the project owner
-
----
-
-### P1 — High
-
-Findings that represent architectural violations.
-
-- **Logic in route files** — `app/` files are for routing and composition only; business logic belongs in `hooks/` or Zustand store actions
-- **Premature component extraction** — a component created for a UI block used in exactly one place (adds indirection without benefit)
-- **Missing component extraction** — a complex, nameable UI block left inline when it makes the screen harder to read
-- **Wrong route group** — screens placed outside their correct group (`(auth)/`, `(tabs)/`, `lesson/`)
-- **`useEffect` for derived state** — state that can be computed inline does not belong in an effect
-- **State management violations** — global state in `useState`; transient UI state in Zustand
-
----
-
-### P2 — Medium
-
-Findings that violate project styling or organization conventions.
-
-- **NativeWind on exception components** — `SafeAreaView`, `Animated.View`, `KeyboardAvoidingView`, `Modal`, `ScrollView` contentContainerStyle, and `Pressable` pressed-state styles must use `StyleSheet` or inline styles, not `className` (see `AGENTS.md` Style Exception Rules)
-- **Direct image imports** — images must be imported through `constants/images.ts`, not required inline in screens or components
-- **Hardcoded design tokens** — hex colors, font sizes, line heights, or font families that duplicate values already defined in `global.css` or `src/theme/tokens.ts`
-- **Data hardcoded in components** — lesson content, copy, or structured data belongs in `data/`, not inside component files
-
----
-
-### P3 — Low
-
-Findings that affect readability — important for a project used to teach developers.
-
-- Unclear names that require reading the implementation to understand
-- Comments that describe what the code does instead of why (well-named code explains itself)
-- Abstractions introduced before they are used in more than one real location
-- Deep prop drilling when a Zustand store already manages the relevant state
-- Missing TypeScript return types on non-trivial exported functions
-
----
-
-### P4 — Polish
-
-Findings that affect visual quality and production feel.
-
-- Spacing or layout that deviates from the attached design references
-- Inconsistent use of typography or color tokens across visually equivalent elements
-- Touch targets smaller than 44×44pt (Apple Human Interface Guidelines minimum)
-- Lists or async components missing loading, empty, or error states
+| P1 | High | Should be fixed before merge. |
+| P2 | Medium | Should be fixed. Convention violation. |
+| P3 | Low | Optional. Readability or naming improvement. |
+| P4 | Polish | Optional. Visual or UX quality. |
 
 ---
 
 ## Output Format
 
-Every review produces the following sections, which are posted verbatim to the GitHub PR as a comment.
+Every review produces:
+
+1. **Inline review comments** — P0 through P2 findings posted as resolvable GitHub conversations anchored to the specific lines in the diff
+2. **Block summary comment** — the full structured report posted to the PR conversation
 
 ```
 ## PR Summary
-  2–3 sentence overview of what the PR does and its overall quality signal.
+  2–3 sentence overview.
 
 ## Changes Walkthrough
-  Table of every changed file with its change type and a one-line summary.
+  Table of every changed file.
 
 ## Findings
-  Grouped by P0 → P4. Each finding includes:
-  - File path and line number
-  - What the issue is and why it matters
-  - A concrete fix, with a code snippet if needed
+  Grouped by P0 → P4. Each finding: file path, issue, concrete fix.
 
 ## AGENTS.md Compliance Checklist
-  Binary pass/fail grid against the ten core project rules.
+  Dynamically generated from the project's own AGENTS.md rules.
 
 ## Verdict
-  Approve / Request Changes / Needs Discussion — with a one-sentence justification.
+  Approve / Needs Discussion — with a one-sentence justification.
 ```
-
-The comment is posted via `gh pr comment --body-file` so the full markdown renders correctly on GitHub.
 
 ---
 
-## AGENTS.md Rules Enforced
+## Using It on Another Project
 
-The following rules from `AGENTS.md` are checked on every review.
+Because the skill derives its lenses from `AGENTS.md`, it is portable to any repository:
 
-| Rule | Where It's Enforced |
-|---|---|
-| No TypeScript `any` | P0 |
-| No secrets in Expo app code | P0 |
-| Images via `constants/images.ts` | P2 |
-| NativeWind style exceptions | P2 |
-| No unauthorized new libraries | P0 |
-| Business logic not in `app/` files | P1 |
-| Components only when reused or complex | P1 |
-| Lesson content in `data/` | P2 |
-| Zustand for global state, `useState` for local | P1 |
-| No hardcoded design tokens | P2 |
+1. Copy `.claude/skills/pr-review/` into the target repo's `.claude/skills/` directory
+2. Ensure the target repo has an `AGENTS.md` at its root describing the project's architecture, style, and convention rules
+3. Authenticate `gh` (`gh auth login`) in the target repo's context
+4. Run `/pr-review` on any open PR branch
+
+The skill will read the target repo's `AGENTS.md` and calibrate its lenses accordingly. No edits to the skill file are needed.
 
 ---
 
 ## Design Philosophy
 
-This reviewer is built around four principles:
+**Built in-house.** No external review services. The skill, the rules, and the output format are maintained in this repo. Every review reflects standards the project itself defined.
 
-**Built in-house.** No external review services. The skill, the rules, and the output format are maintained in this repo. Every review reflects this project's own standards, not a generic ruleset.
+**Rules-driven, not stack-driven.** In v1.x, lenses were hardcoded for Expo + NativeWind. In v2.0, the skill reads `AGENTS.md` and derives checks from it. A project without NativeWind will never see NativeWind findings.
 
-**Teach, don't nitpick.** Every finding explains why the issue matters to this specific project and stack. A finding without a "why" is noise.
+**Teach, don't nitpick.** Every finding explains why the issue matters — connected to either a universal principle or a specific AGENTS.md rule. A finding without a "why" is noise.
 
-**Severity is explicit.** P0 through P4 are defined, not implied. A reviewer that treats every issue as equally urgent trains developers to ignore all feedback equally.
+**Severity is explicit.** P0 through P4 are defined, not implied. Severity determines whether a finding blocks a merge.
 
-**Actionable by default.** Every finding includes a specific file, a specific issue, and a specific fix. Vague observations ("this could be cleaner") are not included.
-
----
-
-## Stack Reference
-
-| Layer | Technology |
-|---|---|
-| Framework | Expo + React Native |
-| Language | TypeScript (strict) |
-| Navigation | Expo Router |
-| Styling | NativeWind v5 + Tailwind v4 |
-| Global State | Zustand + AsyncStorage |
-| Authentication | Clerk |
-| Real-time / Video | Stream / GetStream |
-| AI Features | Stream Vision Agents |
-| Secrets | Expo API Routes (server-side only) |
+**Actionable by default.** Every finding includes a specific file, a specific issue, and a specific fix.
