@@ -11,13 +11,11 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View className="flex-1 px-6">
-        {/* Logo header */}
         <View className="flex-row items-center justify-center mt-4">
           <Image source={images.mascotLogo} style={styles.logoImage} />
           <Text style={styles.logoText}>muolingo</Text>
         </View>
 
-        {/* Headline */}
         <View className="mt-10">
           <Text style={styles.headline}>Your AI language</Text>
           <Text style={styles.headlinePurple}>teacher.</Text>
@@ -26,7 +24,6 @@ export default function OnboardingScreen() {
           </Text>
         </View>
 
-        {/* Mascot illustration with speech bubbles */}
         <View style={styles.illustrationContainer}>
           {/* Hello! bubble — lower left */}
           <View style={[styles.bubble, styles.helloBubble]}>
@@ -46,7 +43,6 @@ export default function OnboardingScreen() {
           <Image source={images.mascotWelcome} style={styles.mascotImage} resizeMode="contain" />
         </View>
 
-        {/* Get Started button */}
         <TouchableOpacity
           className="btn btn-primary flex-row mb-10"
           onPress={() => router.push("/sign-up")}

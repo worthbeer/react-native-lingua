@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { colors, fontSize, lineHeight } from "@/theme";
 import { images } from "@/constants/images";
 import SocialButton from "@/components/social-button";
 import VerificationModal from "@/components/verification-modal";
@@ -26,16 +27,13 @@ export default function SignInScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Back */}
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
 
-        {/* Header */}
         <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Sign in to continue your journey ✨</Text>
 
-        {/* Mascot */}
         <View style={styles.mascotContainer}>
           <Image
             source={images.mascotAuth}
@@ -44,7 +42,6 @@ export default function SignInScreen() {
           />
         </View>
 
-        {/* Email */}
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Email</Text>
           <TextInput
@@ -52,14 +49,13 @@ export default function SignInScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder="alex@gmail.com"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textPlaceholder}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
         </View>
 
-        {/* Sign In */}
         <TouchableOpacity
           className="btn btn-primary mt-6"
           onPress={() => setModalVisible(true)}
@@ -68,19 +64,16 @@ export default function SignInScreen() {
           <Text className="btn-label">Sign In</Text>
         </TouchableOpacity>
 
-        {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>or continue with</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Social */}
         <SocialButton label="Continue with Google" iconLetter="G" iconBg="#ffffff" iconColor="#4285F4" />
         <SocialButton label="Continue with Facebook" iconLetter="f" iconBg="#1877F2" iconColor="#ffffff" />
         <SocialButton label="Continue with Apple" iconLetter="" iconBg="#000000" iconColor="#ffffff" />
 
-        {/* Sign up link */}
         <View style={styles.signUpRow}>
           <Text style={styles.signUpText}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.replace("/sign-up")}>
@@ -123,16 +116,16 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   title: {
-    fontSize: 28,
+    fontSize: fontSize.h2,
     fontFamily: "Poppins-Bold",
     color: "#001132",
-    lineHeight: 36,
+    lineHeight: lineHeight.h2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-Regular",
     color: "#6b7280",
-    lineHeight: 22,
+    lineHeight: lineHeight.bodyMedium,
     marginTop: 6,
   },
   mascotContainer: {
@@ -153,13 +146,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   inputLabel: {
-    fontSize: 11,
+    fontSize: fontSize.caption,
     fontFamily: "Poppins-Medium",
     color: "#6b7280",
     marginBottom: 2,
   },
   input: {
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     fontFamily: "Poppins-Regular",
     color: "#001132",
     padding: 0,
@@ -175,7 +168,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#e5e7eb",
   },
   dividerText: {
-    fontSize: 13,
+    fontSize: fontSize.bodySmall,
     fontFamily: "Poppins-Regular",
     color: "#6b7280",
     marginHorizontal: 12,
@@ -187,13 +180,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   signUpText: {
-    fontSize: 14,
+    fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-Regular",
     color: "#6b7280",
   },
   signUpLink: {
-    fontSize: 14,
+    fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-SemiBold",
-    color: "#6c4ef5",
+    color: colors.linguaPurple,
   },
 });

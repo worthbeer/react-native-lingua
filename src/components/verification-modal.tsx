@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { fontSize, lineHeight } from "@/theme";
 
 type Props = {
   visible: boolean;
@@ -120,9 +121,10 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   title: {
-    fontSize: 22,
+    fontSize: fontSize.h3,
     fontFamily: "Poppins-Bold",
     color: "#001132",
+    lineHeight: lineHeight.h3,
     marginBottom: 10,
   },
   subtitle: {

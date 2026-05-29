@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { colors, fontSize, lineHeight } from "@/theme";
 import { images } from "@/constants/images";
 import SocialButton from "@/components/social-button";
 import VerificationModal from "@/components/verification-modal";
@@ -28,16 +29,13 @@ export default function SignUpScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Back */}
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
 
-        {/* Header */}
         <Text style={styles.title}>Create your account</Text>
         <Text style={styles.subtitle}>Start your language journey today ✨</Text>
 
-        {/* Mascot */}
         <View style={styles.mascotContainer}>
           <Image
             source={images.mascotAuth}
@@ -46,7 +44,6 @@ export default function SignUpScreen() {
           />
         </View>
 
-        {/* Email */}
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Email</Text>
           <TextInput
@@ -54,14 +51,13 @@ export default function SignUpScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder="alex@gmail.com"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textPlaceholder}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
         </View>
 
-        {/* Password */}
         <View style={[styles.inputContainer, styles.inputSpacing]}>
           <Text style={styles.inputLabel}>Password</Text>
           <View style={styles.passwordRow}>
@@ -70,7 +66,7 @@ export default function SignUpScreen() {
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textPlaceholder}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity
@@ -83,7 +79,6 @@ export default function SignUpScreen() {
           </View>
         </View>
 
-        {/* Sign Up */}
         <TouchableOpacity
           className="btn btn-primary mt-6"
           onPress={() => setModalVisible(true)}
@@ -92,19 +87,16 @@ export default function SignUpScreen() {
           <Text className="btn-label">Sign Up</Text>
         </TouchableOpacity>
 
-        {/* Divider */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>or continue with</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Social */}
         <SocialButton label="Continue with Google" iconLetter="G" iconBg="#ffffff" iconColor="#4285F4" />
         <SocialButton label="Continue with Facebook" iconLetter="f" iconBg="#1877F2" iconColor="#ffffff" />
         <SocialButton label="Continue with Apple" iconLetter="" iconBg="#000000" iconColor="#ffffff" />
 
-        {/* Sign in link */}
         <View style={styles.signInRow}>
           <Text style={styles.signInText}>Already have an account? </Text>
           <TouchableOpacity onPress={() => router.push("/sign-in")}>
@@ -147,16 +139,16 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   title: {
-    fontSize: 28,
+    fontSize: fontSize.h2,
     fontFamily: "Poppins-Bold",
     color: "#001132",
-    lineHeight: 36,
+    lineHeight: lineHeight.h2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-Regular",
     color: "#6b7280",
-    lineHeight: 22,
+    lineHeight: lineHeight.bodyMedium,
     marginTop: 6,
   },
   mascotContainer: {
@@ -180,13 +172,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   inputLabel: {
-    fontSize: 11,
+    fontSize: fontSize.caption,
     fontFamily: "Poppins-Medium",
     color: "#6b7280",
     marginBottom: 2,
   },
   input: {
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     fontFamily: "Poppins-Regular",
     color: "#001132",
     padding: 0,
@@ -197,7 +189,7 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: fontSize.bodyLarge,
     fontFamily: "Poppins-Regular",
     color: "#001132",
     padding: 0,
@@ -219,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#e5e7eb",
   },
   dividerText: {
-    fontSize: 13,
+    fontSize: fontSize.bodySmall,
     fontFamily: "Poppins-Regular",
     color: "#6b7280",
     marginHorizontal: 12,
@@ -231,12 +223,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   signInText: {
-    fontSize: 14,
+    fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-Regular",
     color: "#6b7280",
   },
   signInLink: {
-    fontSize: 14,
+    fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-SemiBold",
     color: "#6c4ef5",
   },
