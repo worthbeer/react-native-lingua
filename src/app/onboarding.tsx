@@ -49,7 +49,7 @@ export default function OnboardingScreen() {
         {/* Get Started button */}
         <TouchableOpacity
           className="btn btn-primary flex-row mb-10"
-          onPress={() => router.push("/")}
+          onPress={() => router.push("/sign-up")}
           activeOpacity={0.85}
         >
           <Text className="btn-label flex-1 text-center">Get Started</Text>
