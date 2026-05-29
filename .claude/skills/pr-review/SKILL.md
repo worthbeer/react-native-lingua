@@ -1,7 +1,7 @@
 ---
 name: pr-review
-description: CodeRabbit-inspired PR reviewer for the Lingua Duolingo-clone. Reviews changed files against AGENTS.md rules, project conventions, and React Native / Expo best practices. Outputs a structured report with severity-ranked findings and a compliance checklist.
-version: 1.0.0
+description: PR reviewer for the Lingua Duolingo-clone. Reviews changed files against AGENTS.md rules, project conventions, and React Native / Expo best practices. Produces a structured report with severity-ranked findings and a compliance checklist, then posts it directly to the open GitHub PR as a comment.
+version: 1.1.0
 license: MIT
 ---
 
@@ -17,13 +17,15 @@ Your review must be thorough, actionable, and constructive. Every finding must i
 
 Before writing a single finding, execute all of the following steps in order. Do not skip any.
 
-1. Run `git diff main...HEAD --name-only` to identify every changed file.
-2. Run `git diff main...HEAD` to read the full diff.
-3. Read `AGENTS.md` at the repo root — this is the authoritative rules file for the project.
-4. Read `package.json` and compare against the last known state on `main` to detect unauthorized new dependencies.
-5. Use the Read tool to read any new files or files with significant changes in full — the diff alone is not enough context.
+1. Run `git branch --show-current` to confirm the current branch.
+2. Run `eval "$(/opt/homebrew/bin/brew shellenv)" && gh pr view --json number,title,url` to get the open PR number for this branch. Store the PR number — it is required for Phase 4. If no open PR exists, stop and tell the user to open one first.
+3. Run `git diff main...HEAD --name-only` to identify every changed file.
+4. Run `git diff main...HEAD` to read the full diff.
+5. Read `AGENTS.md` at the repo root — this is the authoritative rules file for the project.
+6. Read `package.json` and compare against the last known state on `main` to detect unauthorized new dependencies.
+7. Use the Read tool to read any new files or files with significant changes in full — the diff alone is not enough context.
 
-A review written without completing Phase 1 is invalid. Do not begin Phase 2 until all five steps are done.
+A review written without completing Phase 1 is invalid. Do not begin Phase 2 until all steps are done.
 
 ---
 
@@ -181,6 +183,30 @@ Fix: [Concrete suggestion. Include a short code snippet if it removes ambiguity.
 **[ Approve / Request Changes / Needs Discussion ]**
 
 [One sentence justifying the verdict. If "Request Changes", name the specific P0 or P1 items that must be resolved before this can merge.]
+
+---
+
+## Phase 4 — Post to GitHub
+
+After the full review is written, post it to the open PR as a comment. Do not skip this step.
+
+1. Write the complete review output to a temporary file:
+   ```bash
+   cat > /tmp/pr-review-output.md << 'REVIEW_EOF'
+   [paste the full review here]
+   REVIEW_EOF
+   ```
+
+2. Post it to the PR using the number captured in Phase 1:
+   ```bash
+   eval "$(/opt/homebrew/bin/brew shellenv)" && gh pr comment <PR_NUMBER> --body-file /tmp/pr-review-output.md
+   ```
+
+3. Confirm success by checking the output of the `gh` command. If it succeeds, report the PR URL to the user. If it fails (e.g. `gh` not authenticated), tell the user exactly why and what to run to fix it — do not silently skip.
+
+4. Clean up: `rm /tmp/pr-review-output.md`
+
+The review is not complete until it is posted to GitHub. A review that only exists in the local session has no value to collaborators.
 
 ---
 
