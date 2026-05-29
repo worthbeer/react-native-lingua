@@ -15,6 +15,7 @@ export const colors = {
   // Neutrals
   textPrimary: "#001132",
   textSecondary: "#6B7280",
+  textPlaceholder: "#9CA3AF",
   border: "#E5E7EB",
   surface: "#F6F7FB",
   background: "#FFFFFF",

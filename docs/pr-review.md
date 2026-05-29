@@ -1,6 +1,6 @@
 # Pull Request Review System — Lingua Duolingo-Clone
 
-This document describes the structured PR review system used on this project. Reviews are conducted by Claude Code using a custom skill that mirrors the approach of tools like CodeRabbit — automated, structured, and enforcement-driven — but tuned specifically to this project's stack, conventions, and AGENTS.md rules.
+This project uses a custom Claude Code skill for structured PR reviews. It is built and maintained in-house — no third-party review bots, no external services. Every review is produced by the skill, posted directly to the GitHub PR as a comment using the `gh` CLI, and is visible to anyone reading the PR on GitHub.
 
 ---
 
@@ -10,9 +10,17 @@ This document describes the structured PR review system used on this project. Re
 /pr-review
 ```
 
-Run this command in Claude Code with the feature branch checked out. The reviewer reads the diff against `main`, loads the project rules, and produces a structured report.
+Run this in Claude Code with the feature branch checked out. The skill:
 
-No configuration required. The skill reads `AGENTS.md` and `package.json` automatically before writing any findings.
+1. Reads the diff against `main`
+2. Loads `AGENTS.md` and `package.json`
+3. Applies five review lenses to every changed file
+4. Produces a structured report
+5. **Posts the report directly to the open GitHub PR as a comment**
+
+The review appears on GitHub automatically. No manual copy-paste required. Requires `gh auth login` to be completed once.
+
+**Prerequisites:** `gh` CLI installed and authenticated (`gh auth login`).
 
 ---
 
@@ -94,7 +102,7 @@ Findings that affect visual quality and production feel.
 
 ## Output Format
 
-Every review produces the following sections.
+Every review produces the following sections, which are posted verbatim to the GitHub PR as a comment.
 
 ```
 ## PR Summary
@@ -115,6 +123,8 @@ Every review produces the following sections.
 ## Verdict
   Approve / Request Changes / Needs Discussion — with a one-sentence justification.
 ```
+
+The comment is posted via `gh pr comment --body-file` so the full markdown renders correctly on GitHub.
 
 ---
 
@@ -139,7 +149,9 @@ The following rules from `AGENTS.md` are checked on every review.
 
 ## Design Philosophy
 
-This reviewer is built around three principles:
+This reviewer is built around four principles:
+
+**Built in-house.** No external review services. The skill, the rules, and the output format are maintained in this repo. Every review reflects this project's own standards, not a generic ruleset.
 
 **Teach, don't nitpick.** Every finding explains why the issue matters to this specific project and stack. A finding without a "why" is noise.
 
