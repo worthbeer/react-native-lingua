@@ -9,36 +9,52 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { fontSize, lineHeight } from "@/theme";
 
 type Props = {
   visible: boolean;
   email: string;
   onClose: () => void;
+  onVerify: (code: string) => Promise<void>;
+  onResend?: () => Promise<void>;
+  error?: string;
 };
 
-export default function VerificationModal({ visible, email, onClose }: Props) {
+export default function VerificationModal({
+  visible,
+  email,
+  onClose,
+  onVerify,
+  onResend,
+  error,
+}: Props) {
   const [code, setCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRef = useRef<TextInput>(null);
-  const router = useRouter();
 
   useEffect(() => {
     if (visible) {
       setCode("");
+      setIsSubmitting(false);
       const t = setTimeout(() => inputRef.current?.focus(), 150);
       return () => clearTimeout(t);
     }
   }, [visible]);
 
-  const handleCodeChange = (text: string) => {
+  const handleCodeChange = async (text: string) => {
     const digits = text.replace(/[^0-9]/g, "").slice(0, 6);
     setCode(digits);
-    if (digits.length === 6) {
-      setTimeout(() => {
-        onClose();
-        router.replace("/");
-      }, 300);
+    if (digits.length === 6 && !isSubmitting) {
+      setIsSubmitting(true);
+      await onVerify(digits);
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (onResend) {
+      setCode("");
+      await onResend();
     }
   };
 
@@ -68,6 +84,7 @@ export default function VerificationModal({ visible, email, onClose }: Props) {
             maxLength={6}
             style={styles.hiddenInput}
             caretHidden
+            editable={!isSubmitting}
           />
 
           {/* Tap anywhere on the digit row to focus the hidden input */}
@@ -89,6 +106,14 @@ export default function VerificationModal({ visible, email, onClose }: Props) {
               </View>
             ))}
           </TouchableOpacity>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          {onResend ? (
+            <TouchableOpacity onPress={handleResend} style={styles.resendButton}>
+              <Text style={styles.resendText}>Didn't get a code? Resend</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -172,5 +197,21 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: "Poppins-Bold",
     color: "#001132",
+  },
+  errorText: {
+    fontSize: 13,
+    fontFamily: "Poppins-Regular",
+    color: "#dc2626",
+    textAlign: "center",
+    marginTop: 16,
+  },
+  resendButton: {
+    marginTop: 20,
+    paddingVertical: 8,
+  },
+  resendText: {
+    fontSize: 14,
+    fontFamily: "Poppins-Medium",
+    color: "#6c4ef5",
   },
 });

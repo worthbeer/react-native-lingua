@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { isClerkAPIResponseError, useSignIn } from "@clerk/expo";
 import { colors, fontSize, lineHeight } from "@/theme";
 import { images } from "@/constants/images";
 import SocialButton from "@/components/social-button";
@@ -17,11 +20,79 @@ import VerificationModal from "@/components/verification-modal";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { isLoaded, signIn, setActive } = useSignIn();
   const [email, setEmail] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  // stored so prepareFirstFactor can be called again on resend
+  const emailAddressIdRef = useRef<string | null>(null);
+
+  const handleSignIn = async () => {
+    if (!isLoaded) return;
+    setError(undefined);
+    setIsLoading(true);
+    try {
+      const { supportedFirstFactors } = await signIn.create({ identifier: email });
+      const emailFactor = supportedFirstFactors?.find((f) => f.strategy === "email_code");
+      if (!emailFactor || !("emailAddressId" in emailFactor)) {
+        setError("Email code sign-in is not enabled for this account.");
+        return;
+      }
+      const emailAddressId = emailFactor.emailAddressId as string;
+      emailAddressIdRef.current = emailAddressId;
+      await signIn.prepareFirstFactor({ strategy: "email_code", emailAddressId });
+      setModalVisible(true);
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.longMessage ?? err.errors[0]?.message ?? "Sign in failed.");
+      } else {
+        setError("Something went wrong. Check your connection and try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async (code: string) => {
+    if (!isLoaded) return;
+    setError(undefined);
+    try {
+      const result = await signIn.attemptFirstFactor({ strategy: "email_code", code });
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.longMessage ?? err.errors[0]?.message ?? "Invalid code.");
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    }
+  };
+
+  const handleResend = async () => {
+    if (!isLoaded || !emailAddressIdRef.current) return;
+    setError(undefined);
+    try {
+      await signIn.prepareFirstFactor({
+        strategy: "email_code",
+        emailAddressId: emailAddressIdRef.current,
+      });
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.message ?? "Could not resend code.");
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.flex}
+      >
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
@@ -56,12 +127,16 @@ export default function SignInScreen() {
           />
         </View>
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
         <TouchableOpacity
           className="btn btn-primary mt-6"
-          onPress={() => setModalVisible(true)}
+          onPress={handleSignIn}
           activeOpacity={0.85}
+          disabled={isLoading || !email}
+          style={isLoading || !email ? { opacity: 0.5 } : undefined}
         >
-          <Text className="btn-label">Sign In</Text>
+          <Text className="btn-label">{isLoading ? "Sending code…" : "Sign In"}</Text>
         </TouchableOpacity>
 
         <View style={styles.dividerRow}>
@@ -81,11 +156,15 @@ export default function SignInScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <VerificationModal
         visible={modalVisible}
         email={email}
         onClose={() => setModalVisible(false)}
+        onVerify={handleVerify}
+        onResend={handleResend}
+        error={error}
       />
     </SafeAreaView>
   );
@@ -95,6 +174,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#ffffff",
+  },
+  flex: {
+    flex: 1,
   },
   scroll: {
     flexGrow: 1,
@@ -156,6 +238,12 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
     color: "#001132",
     padding: 0,
+  },
+  errorText: {
+    fontSize: fontSize.bodySmall,
+    fontFamily: "Poppins-Regular",
+    color: colors.error,
+    marginTop: 8,
   },
   dividerRow: {
     flexDirection: "row",

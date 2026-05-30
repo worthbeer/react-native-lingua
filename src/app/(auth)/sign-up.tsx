@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { isClerkAPIResponseError, useSignUp } from "@clerk/expo";
 import { colors, fontSize, lineHeight } from "@/theme";
 import { images } from "@/constants/images";
 import SocialButton from "@/components/social-button";
@@ -17,13 +20,71 @@ import VerificationModal from "@/components/verification-modal";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { isLoaded, signUp, setActive } = useSignUp();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  const handleSignUp = async () => {
+    if (!isLoaded) return;
+    setError(undefined);
+    setIsLoading(true);
+    try {
+      await signUp.create({ emailAddress: email, password });
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setModalVisible(true);
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.longMessage ?? err.errors[0]?.message ?? "Sign up failed.");
+      } else {
+        setError("Something went wrong. Check your connection and try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async (code: string) => {
+    if (!isLoaded) return;
+    setError(undefined);
+    try {
+      const result = await signUp.attemptEmailAddressVerification({ code });
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.longMessage ?? err.errors[0]?.message ?? "Invalid code.");
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    }
+  };
+
+  const handleResend = async () => {
+    if (!isLoaded) return;
+    setError(undefined);
+    try {
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.message ?? "Could not resend code.");
+      } else {
+        setError("Could not resend. Check your connection.");
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.flex}
+      >
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
@@ -79,13 +140,24 @@ export default function SignUpScreen() {
           </View>
         </View>
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
         <TouchableOpacity
           className="btn btn-primary mt-6"
-          onPress={() => setModalVisible(true)}
+          onPress={handleSignUp}
           activeOpacity={0.85}
+          disabled={isLoading || !email || !password}
+          style={[
+            isLoading || !email || !password
+              ? styles.btnDisabled
+              : styles.btnActive,
+          ]}
         >
-          <Text className="btn-label">Sign Up</Text>
+          <Text className="btn-label">{isLoading ? "Creating account…" : "Sign Up"}</Text>
         </TouchableOpacity>
+        {(!email || !password) && !error ? (
+          <Text style={styles.hintText}>Enter your email and password to continue</Text>
+        ) : null}
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
@@ -104,11 +176,15 @@ export default function SignUpScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <VerificationModal
         visible={modalVisible}
         email={email}
         onClose={() => setModalVisible(false)}
+        onVerify={handleVerify}
+        onResend={handleResend}
+        error={error}
       />
     </SafeAreaView>
   );
@@ -118,6 +194,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#ffffff",
+  },
+  flex: {
+    flex: 1,
   },
   scroll: {
     flexGrow: 1,
@@ -200,6 +279,23 @@ const styles = StyleSheet.create({
   eyeIcon: {
     fontSize: 16,
   },
+  btnActive: {},
+  btnDisabled: {
+    opacity: 0.4,
+  },
+  errorText: {
+    fontSize: fontSize.bodySmall,
+    fontFamily: "Poppins-Regular",
+    color: colors.error,
+    marginTop: 8,
+  },
+  hintText: {
+    fontSize: fontSize.caption,
+    fontFamily: "Poppins-Regular",
+    color: colors.textSecondary,
+    textAlign: "center",
+    marginTop: 8,
+  },
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -230,6 +326,6 @@ const styles = StyleSheet.create({
   signInLink: {
     fontSize: fontSize.bodyMedium,
     fontFamily: "Poppins-SemiBold",
-    color: "#6c4ef5",
+    color: colors.linguaPurple,
   },
 });
