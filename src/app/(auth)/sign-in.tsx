@@ -12,21 +12,49 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { isClerkAPIResponseError, useSignIn } from "@clerk/expo";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
+import { isClerkAPIResponseError, useSSO } from "@clerk/expo";
+import { useSignIn } from "@clerk/expo/legacy";
 import { colors, fontSize, lineHeight } from "@/theme";
 import { images } from "@/constants/images";
 import SocialButton from "@/components/social-button";
 import VerificationModal from "@/components/verification-modal";
 
+WebBrowser.maybeCompleteAuthSession();
+
 export default function SignInScreen() {
   const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { startSSOFlow } = useSSO();
   const [email, setEmail] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
   // stored so prepareFirstFactor can be called again on resend
   const emailAddressIdRef = useRef<string | null>(null);
+
+  const handleOAuth = async (strategy: "oauth_google" | "oauth_apple" | "oauth_facebook") => {
+    setError(undefined);
+    try {
+      const { createdSessionId, setActive: ssoSetActive } = await startSSOFlow({
+        strategy,
+        redirectUrl: Linking.createURL("/"),
+      });
+      if (createdSessionId && ssoSetActive) {
+        await ssoSetActive({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setError(err.errors[0]?.longMessage ?? err.errors[0]?.message ?? "OAuth sign-in failed.");
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(JSON.stringify(err));
+      }
+    }
+  };
 
   const handleSignIn = async () => {
     if (!isLoaded) return;
@@ -145,9 +173,9 @@ export default function SignInScreen() {
           <View style={styles.dividerLine} />
         </View>
 
-        <SocialButton label="Continue with Google" iconLetter="G" iconBg="#ffffff" iconColor="#4285F4" />
-        <SocialButton label="Continue with Facebook" iconLetter="f" iconBg="#1877F2" iconColor="#ffffff" />
-        <SocialButton label="Continue with Apple" iconLetter="" iconBg="#000000" iconColor="#ffffff" />
+        <SocialButton label="Continue with Google" iconLetter="G" iconBg="#ffffff" iconColor="#4285F4" onPress={() => handleOAuth("oauth_google")} />
+        <SocialButton label="Continue with Facebook" iconLetter="f" iconBg="#1877F2" iconColor="#ffffff" onPress={() => handleOAuth("oauth_facebook")} />
+        <SocialButton label="Continue with Apple" iconLetter="" iconBg="#000000" iconColor="#ffffff" onPress={() => handleOAuth("oauth_apple")} />
 
         <View style={styles.signUpRow}>
           <Text style={styles.signUpText}>Don't have an account? </Text>

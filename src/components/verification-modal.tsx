@@ -41,6 +41,10 @@ export default function VerificationModal({
     }
   }, [visible]);
 
+  const handleClose = () => {
+    onClose();
+  };
+
   const handleCodeChange = async (text: string) => {
     const digits = text.replace(/[^0-9]/g, "").slice(0, 6);
     setCode(digits);
@@ -59,75 +63,90 @@ export default function VerificationModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.overlay}
-      >
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <View style={styles.root}>
+        <TouchableOpacity style={styles.backdrop} onPress={handleClose} activeOpacity={1} />
 
-          <Text style={styles.title}>Check your email</Text>
-          <Text style={styles.subtitle}>
-            We sent a 6-digit code to{"\n"}
-            <Text style={styles.emailHighlight}>{email || "your email"}</Text>
-            {"\n"}Enter it below to continue.
-          </Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.kav}
+          pointerEvents="box-none"
+        >
+          <View style={styles.sheet}>
+            <View style={styles.handle} />
 
-          {/* Hidden real input captures keyboard */}
-          <TextInput
-            ref={inputRef}
-            value={code}
-            onChangeText={handleCodeChange}
-            keyboardType="number-pad"
-            maxLength={6}
-            style={styles.hiddenInput}
-            caretHidden
-            editable={!isSubmitting}
-          />
+            <View style={styles.headerRow}>
+              <Text style={styles.title}>Check your email</Text>
+            </View>
 
-          {/* Tap anywhere on the digit row to focus the hidden input */}
-          <TouchableOpacity
-            onPress={() => inputRef.current?.focus()}
-            style={styles.codeRow}
-            activeOpacity={1}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.codeBox,
-                  code.length > i && styles.codeBoxFilled,
-                  code.length === i && styles.codeBoxActive,
-                ]}
-              >
-                <Text style={styles.codeChar}>{code[i] ?? ""}</Text>
-              </View>
-            ))}
-          </TouchableOpacity>
+            <Text style={styles.subtitle}>
+              We sent a 6-digit code to{"\n"}
+              <Text style={styles.emailHighlight}>{email || "your email"}</Text>
+              {"\n"}Enter it below to continue.
+            </Text>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TextInput
+              ref={inputRef}
+              value={code}
+              onChangeText={handleCodeChange}
+              keyboardType="number-pad"
+              maxLength={6}
+              style={styles.hiddenInput}
+              caretHidden
+              editable={!isSubmitting}
+              textContentType="oneTimeCode"
+              autoComplete="one-time-code"
+            />
 
-          {onResend ? (
-            <TouchableOpacity onPress={handleResend} style={styles.resendButton}>
-              <Text style={styles.resendText}>Didn't get a code? Resend</Text>
+            <TouchableOpacity
+              onPress={() => inputRef.current?.focus()}
+              style={styles.codeRow}
+              activeOpacity={1}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.codeBox,
+                    code.length > i && styles.codeBoxFilled,
+                    code.length === i && styles.codeBoxActive,
+                  ]}
+                >
+                  <Text style={styles.codeChar}>{code[i] ?? ""}</Text>
+                </View>
+              ))}
             </TouchableOpacity>
-          ) : null}
-        </View>
-      </KeyboardAvoidingView>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            {onResend ? (
+              <TouchableOpacity onPress={handleResend} style={styles.resendButton}>
+                <Text style={styles.resendText}>Didn't get a code? Resend</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </KeyboardAvoidingView>
+
+        {/* Rendered last = on top of backdrop and sheet */}
+        <TouchableOpacity style={styles.closeButtonAbsolute} onPress={handleClose}>
+          <Text style={styles.closeIcon}>✕</Text>
+        </TouchableOpacity>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  root: {
     flex: 1,
-    justifyContent: "flex-end",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  kav: {
+    flex: 1,
+    justifyContent: "flex-end",
   },
   sheet: {
     backgroundColor: "#ffffff",
@@ -145,12 +164,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#e5e7eb",
     marginBottom: 28,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 10,
+  },
+  closeButtonAbsolute: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    zIndex: 100,
+    padding: 12,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 20,
+  },
+  closeIcon: {
+    fontSize: 18,
+    color: "#6b7280",
+  },
   title: {
     fontSize: fontSize.h3,
     fontFamily: "Poppins-Bold",
     color: "#001132",
     lineHeight: lineHeight.h3,
-    marginBottom: 10,
   },
   subtitle: {
     fontSize: 14,
