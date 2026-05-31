@@ -44,13 +44,20 @@ export default function OnboardingScreen() {
         </View>
 
         <TouchableOpacity
-          className="btn btn-primary flex-row mb-10"
+          className="btn btn-primary flex-row mb-4"
           onPress={() => router.push("/sign-up")}
           activeOpacity={0.85}
         >
           <Text className="btn-label flex-1 text-center">Get Started</Text>
           <Text className="btn-label">›</Text>
         </TouchableOpacity>
+
+        <View style={styles.loginRow}>
+          <Text style={styles.loginText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push("/sign-in")} style={styles.loginLinkWrapper}>
+            <Text style={styles.loginLink}>Log in</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -134,5 +141,24 @@ const styles = StyleSheet.create({
   },
   bubbleTextRed: {
     color: "#FF4D4F",
+  },
+  loginRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  loginText: {
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    color: "#6b7280",
+  },
+  loginLinkWrapper: {
+    paddingVertical: 4,
+  },
+  loginLink: {
+    fontSize: 14,
+    fontFamily: "Poppins-SemiBold",
+    color: "#6c4ef5",
   },
 });
